@@ -7,18 +7,18 @@
         }
         console.log("Connected To MongoDB");
 
-            // const db = client.db('TodoApp');
-            // db.collection('users').insertOne({
-            //     name:'yasser',
-            //     age:21,
-            //     location:'Fifth settlment'
-            // },(err,res) => {
-            //     if(err){
-            //         console.log("Unable to insert");    
-            //     }
-            //     console.log(JSON.stringify(res.ops,undefined,2));
+            const db = client.db('TodoApp');
+            db.collection('users').insertOne({
+                name:'yasser',
+                age:21,
+                location:'Fifth settlment'
+            },(err,res) => {
+                if(err){
+                    console.log("Unable to insert");    
+                }
+                console.log(JSON.stringify(res.ops,undefined,2));
                 
-            // })
+            })
             
 
 
