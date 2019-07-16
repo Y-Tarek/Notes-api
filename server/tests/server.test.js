@@ -1,14 +1,18 @@
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo'); 
- const {User} = require('./../models/users');
+const {Users} = require('./../models/users');
+const {ObjectID} = require("mongodb");
 const expect = require('expect');
 const request = require('supertest');
+
 // Random arrays for unit tests
     var todos = [
         {
+            _id: new ObjectID(),
             text: 'banana'
         },
         {
+            _id: new ObjectID(),
             text: 'botato'
         }
     ]
@@ -32,8 +36,8 @@ const request = require('supertest');
 
 
     beforeEach((done) => {
-        User.remove({}).then(() => {
-            return User.insertMany(users);
+        Users.remove({}).then(() => {
+            return Users.insertMany(users);
         }).then(() => {done()})
     })
 
@@ -86,20 +90,21 @@ const request = require('supertest');
 // Testing Post requests for creating new users
     describe("Post /users",() => {
     it("should create a new user",(done) => {
-        var mail = "AhmedTarek@yahoo.com"
+        var email = "AhmedTarek@yahoo.com";
         request(app)
             .post('/users')
-            .send(mail)
+            .send({email})
             .expect(200)
             .expect((res) => {
-                expect(res.body.email).toBe(mail);
+                expect(res.body.email).toBe(email);
             })
             .end((err,res) => {
                 if(err){
                     return done(err);
                 }
-                User.find({mail}).then((newuser) => {
-                    expect(newuser[0].email).toBe(mail)
+                Users.find({email}).then((newuser) => {
+                    expect(newuser.length).toBe(1);
+                    expect(newuser[0].email).toBe(email)
                     done();
                 }).catch((e) => {done(e)})
             })
@@ -123,16 +128,104 @@ const request = require('supertest');
         });
     });
 
+// Testing Get a specific todo
+    describe("Get /todos/:id",() => {
+        it("should return a specific todo",(done) => {
+            request(app)
+             .get(`/todos/${todos[0]._id.toHexString()}`)
+             .expect(200)
+             .expect((res) => {
+                 expect(res.body.todo.text).toBe(todos[0].text);
+             })
+             .end(done);
+        });
+
+        it("should return a 404 if id is not found",(done) => {
+            var hexId = new ObjectID().toHexString();
+            request(app)
+             .get(`/todos/${hexId}`)
+             .expect(404)
+             .end(done)
+        });
+
+        it("should return  404 if objectid is not valid",(done) => {
+            request(app)
+             .get('/todos/123n')
+             .expect(404)
+             .end(done)
+        })
+    })
+
 
 // Tseting Get requests for users
-    describe('Get /users',() => {
-        it("should return all users",(done) => {
+   describe('Get /users',() =>{
+      it("should get all users",(done) => {
+          request(app)
+           .get('/users')
+           .expect(200)
+           .expect((res) => {
+               expect(res.body.users.length).toBe(2)
+           })
+           .end(done);
+      });
+   });
+
+
+// Testing Delete requests for deleting a todo by id
+    describe('Delete /todo/:id',() => {
+        it("should delete a todo by id",(done) => {
+            var Id = todos[1]._id.toHexString();
             request(app)
-            .get('/users')
+             .delete(`/todos/${Id}`)
+             .expect(200)
+             .expect((res) => {
+                 expect(res.body.result._id).toBe(Id);
+             })
+             .end((err,res) => {
+                    if(err){
+                       return done(err);
+                    }
+                    Todo.findById(Id).then((todo) => {
+                        expect(todo).toBeFalsy()
+                        done();
+                    }).catch((e) => done(e));
+                  
+             });
+        });
+
+        it("should return 404 if id is not found",(done) => {
+            var ID = new ObjectID().toHexString();
+            request(app)
+             .delete(`/todos/${ID}`)
+             .expect(404)
+             .end(done)
+        });
+
+        it("should return 404 if id not valid",(done) => {
+            request(app)
+             .delete('/todos/1234')
+             .expect(404)
+             .end(done)
+        });
+    })
+
+// Testing updating a todo 
+   describe("Patch /todos/:id",() => {
+       it("should update a todo", (done) => {
+           var id = todos[0]._id.toHexString();
+           var txt = "Text is updated";
+           request(app)
+            .patch(`/todos/${id}`)
+            .send({
+                completed:true,
+                text:txt
+                
+            })
             .expect(200)
             .expect((res) => {
-                expect(res.body.users.length).toBe(2);
+                expect(res.body.todo.text).toBe(txt);
+                expect(res.body.todo.completed).toBe(true)
             })
-            .end(done)
-        });
-    });
+           .end(done);
+       });
+   })
