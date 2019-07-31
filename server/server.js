@@ -6,6 +6,7 @@ const {Todo} = require('./models/todo');
 const {Users} = require('./models/users');
 const {ObjectID} = require('mongodb');
 const _ = require('lodash');
+const {authintcate} = require('./middleware/authintcate');
 var app = express();
 
 //configure node middleware
@@ -28,13 +29,14 @@ var app = express();
 
 //Post requests for users
         app.post('/users',(req,res) => {
-            var newUser = new Users({
-                email: req.body.email
-            });
-            newUser.save().then((user) => {
-                res.send(user);
-            },(e) => {res.status(400).send(e)})
-        });
+            var body = _.pick(req.body,['email','password']);
+            var user = new Users(body);
+            user.save().then(() => {
+                return user.generateAuthToken();
+            }).then((token) => {
+                res.header('x-auth',token).send(user);
+            }).catch((e) => res.status(400).send(e))
+        })
  
  // Get requests for todos 
         app.get('/todos',(req,res) => {
@@ -57,11 +59,19 @@ var app = express();
                 res.send({todo});
             },(e) => {res.status(400).send(e)})
         })
+        
+        
 // Get request for getting Users
        app.get('/users',(req,res) => {
            Users.find().then((users) => {
                res.send({users})
            },(e) => {res.status(400).send(e)});
+       });
+
+
+// Get request for an indivual user that have an access
+       app.get('/users/me',authintcate,(req,res) => {
+          res.send(req.user);
        });
 
 // Delete reuest for deleting a todo
