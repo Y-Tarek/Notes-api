@@ -37,6 +37,17 @@ var app = express();
                 res.header('x-auth',token).send(user);
             }).catch((e) => res.status(400).send(e))
         })
+
+
+//Post request for login the idea to get the token 
+        app.post('/users/login',(req,res) => {
+            var body = _.pick(req.body,['email','password']);
+            Users.findByCredintials(body.email,body.password).then((user) => {
+                return user.generateAuthToken().then((token) => {
+                    res.header('x-auth',token).send(user);
+                }).catch((e) => res.status(400).send(e))
+            })
+        })
  
  // Get requests for todos 
         app.get('/todos',(req,res) => {
@@ -54,7 +65,7 @@ var app = express();
             }
             Todo.findById(id).then((todo) => {
                 if(!todo){
-                   return  res.status(404).send()
+                   return  res.status(404).send();
                 }
                 res.send({todo});
             },(e) => {res.status(400).send(e)})
@@ -71,7 +82,7 @@ var app = express();
 
 // Get request for an indivual user that have an access
        app.get('/users/me',authintcate,(req,res) => {
-          res.send(req.user);
+         res.send(req.user);
        });
 
 // Delete reuest for deleting a todo
@@ -90,6 +101,14 @@ var app = express();
           }
        )
     })
+
+// logout a user that is authintcated\
+
+   app.delete('/users/me/logout',authintcate,(req,res) =>{
+      req.user.removeToken(req.token).then(() => {
+          res.status(200).send();
+      }).catch((e) => res.status(404).send())
+   })
 
 // Update request for updating todo 
     app.patch('/todos/:id',(req,res) => {

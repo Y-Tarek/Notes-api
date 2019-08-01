@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const bcrypt = require('bcryptjs');
 // Creating  users (table or model)
@@ -59,20 +59,56 @@ const bcrypt = require('bcryptjs');
       }
 
 
+      UserSchema.methods.removeToken = function(token){
+        var user=this;
+        return user.update({
+          $pull: {
+            tokens:{
+              token:token
+            }
+          }
+        })
+      }
+
+
       UserSchema.statics.findByToken = function(token){
        var user = this;
        var decoded;
          try{
           decoded = jwt.verify(token,'abc123');
+          
+          
          }catch(e){
+           console.log(e);
             return Promise.reject();
+            
          }
          return user.findOne({
-          '_id' : decoded._id,
+           '_id' : decoded._id,
           'tokens.token' : token,
           'tokens.access' : 'auth'
          });
       };
+
+      UserSchema.statics.findByCredintials = function(email,password){
+         var user = this;
+         return user.findOne({
+           email
+         }).then((user) => {
+           if(!user){
+             return Promise.reject();
+           }
+           return new Promise((resolve,reject)=>{
+             bcrypt.compare(password,user.password,(err,res) => {
+               if(res){
+                 resolve(user);
+               }else{
+                 reject();
+               }
+             })
+           })
+         })
+      }
 
       UserSchema.pre('save',function(next){
         var user = this;
