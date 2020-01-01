@@ -43,7 +43,7 @@ const bcrypt = require('bcryptjs');
         var userObject = user.toObject();
           return _.pick(userObject,['tokens','email','_id']);
       };
-
+// Instance Methods : They can edit or inserts or remove so we take an instance to perform any of these operations on models.
 
       UserSchema.methods.generateAuthToken = function(){
         var user = this;
@@ -70,7 +70,7 @@ const bcrypt = require('bcryptjs');
         })
       }
 
-
+// Model Methods : They can find data  so we donot need to  take an instance we just call the model.
       UserSchema.statics.findByToken = function(token){
        var user = this;
        var decoded;
@@ -109,7 +109,7 @@ const bcrypt = require('bcryptjs');
            })
          })
       }
-
+// this a middleware so we called next function if we didnot the program would crash.
       UserSchema.pre('save',function(next){
         var user = this;
           if(user.isModified('password')){
@@ -123,6 +123,10 @@ const bcrypt = require('bcryptjs');
             next();
           }
       })
+//  gensalt is like adding salt to to food so that no body will eat it it adds some features to password and generates salted password to be hashed,
+//  10 stands for the cost factors to generate a diffrent hashed password every time the more cost the harder to get real password,
+//  This protect from rainbow table attacks which is a database with many hashed passwords that can be compared and hack your hashed passwords,
+//  so salt in becrypt stop that and even if two passwords the same the hash will hardly ever be the same.
 
     var users = mongoose.model('users',UserSchema);
 

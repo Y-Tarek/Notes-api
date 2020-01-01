@@ -1,6 +1,6 @@
 const {Users} = require('./../models/users');
 
-var authintcate = (req,res,next) => { 
+var authintcate = (req,res,next) => { //next function is esseintial for any middleware as it calls the next middleware to work
   var token  = req.header('x-auth');  
   Users.findByToken(token).then((user) => {
       if(!user) {

@@ -7,6 +7,7 @@ const {Users} = require('./models/users');
 const {ObjectID} = require('mongodb');
 const _ = require('lodash');
 const {authintcate} = require('./middleware/authintcate');
+const address =  require('os').networkInterfaces().wlp3s0[0].address;
 var app = express();
 
 //configure node middleware
@@ -144,8 +145,10 @@ var app = express();
 
 
 // Listening to port 3000
-    app.listen(3000,()=>{
-        console.log('Server Started');
+    app.listen(3000,address,()=>{
+        console.log('Server Started With an IP:', address);
+        
+       
     });
 
 module.exports = {app:app};
